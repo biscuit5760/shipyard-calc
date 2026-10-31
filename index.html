@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Shipyard Calc</title>
+  <meta name="description" content="Tape-measure fractions, metric to imperial, and steel plate weight for the shipyard.">
+  <meta name="theme-color" content="#0b0d10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Shipyard Calc">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Shipyard Calc</h1>
+    <button id="themeBtn" class="pill" type="button" aria-label="Switch light or dark">☀ Light</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="frac" type="button">Tape Fractions</button>
+    <button class="tab" data-tab="conv" type="button">Metric ⇄ Imperial</button>
+    <button class="tab" data-tab="plate" type="button">Plate Weight</button>
+  </nav>
+
+  <main>
+    <!-- ============ TAPE FRACTIONS ============ -->
+    <section id="tab-frac" class="panel">
+      <h2>Tape-Measure Fractions</h2>
+      <div class="screen">
+        <div id="fExpr" class="expr">Type a number, then tap a fraction</div>
+        <div id="fRes" class="res"></div>
+      </div>
+      <div id="fMore"></div>
+      <div class="pad" id="fracPad">
+        <button class="k frac" data-k="f8">½</button>
+        <button class="k frac" data-k="f4">¼</button>
+        <button class="k frac" data-k="f12">¾</button>
+        <button class="k frac" data-k="f2">⅛</button>
+        <button class="k frac" data-k="f6">⅜</button>
+        <button class="k frac" data-k="f10">⅝</button>
+        <button class="k frac" data-k="f14">⅞</button>
+        <button class="k frac" id="t16" type="button">/16</button>
+      </div>
+      <div class="pad hidden" id="pad16">
+        <button class="k frac" data-k="f1">1/16</button>
+        <button class="k frac" data-k="f3">3/16</button>
+        <button class="k frac" data-k="f5">5/16</button>
+        <button class="k frac" data-k="f7">7/16</button>
+        <button class="k frac" data-k="f9">9/16</button>
+        <button class="k frac" data-k="f11">11/16</button>
+        <button class="k frac" data-k="f13">13/16</button>
+        <button class="k frac" data-k="f15">15/16</button>
+      </div>
+      <div class="pad" id="numPad">
+        <button class="k num" data-k="7">7</button>
+        <button class="k num" data-k="8">8</button>
+        <button class="k num" data-k="9">9</button>
+        <button class="k op" data-k="÷">÷</button>
+        <button class="k num" data-k="4">4</button>
+        <button class="k num" data-k="5">5</button>
+        <button class="k num" data-k="6">6</button>
+        <button class="k op" data-k="×">×</button>
+        <button class="k num" data-k="1">1</button>
+        <button class="k num" data-k="2">2</button>
+        <button class="k num" data-k="3">3</button>
+        <button class="k op" data-k="−">−</button>
+        <button class="k num" data-k="0">0</button>
+        <button class="k op" data-k="ft">ft '</button>
+        <button class="k util" id="fBack" aria-label="Backspace">⌫</button>
+        <button class="k op" data-k="+">+</button>
+        <button class="k util" id="fClear">C</button>
+        <button class="k eq" id="fEq">=</button>
+      </div>
+      <p class="how">Type the whole number, then tap its fraction: 25 then ½ is 25 ½. Tap ft ' after a number for feet, like 3 ft ' 4 ½. ⌫ takes back only the last thing you pressed. After =, tap an operator to keep going from the answer.</p>
+    </section>
+
+    <!-- ============ METRIC <-> IMPERIAL ============ -->
+    <section id="tab-conv" class="panel hidden">
+      <h2 id="cHead">Metric → Inches &amp; Feet</h2>
+      <div class="seg" id="cDir">
+        <button class="on" data-v="toImp" type="button">Metric → Imperial</button>
+        <button data-v="toMet" type="button">Imperial → Metric</button>
+      </div>
+      <div id="cToImp">
+        <div class="seg" id="cUnit">
+          <button class="on" data-v="mm" type="button">mm</button>
+          <button data-v="cm" type="button">cm</button>
+          <button data-v="m" type="button">m</button>
+        </div>
+        <label class="lbl" for="cMetric" id="cMetricLbl">Measurement in mm</label>
+        <input id="cMetric" class="big" inputmode="decimal" autocomplete="off" placeholder="Type mm">
+        <div id="cImpOut"></div>
+      </div>
+      <div id="cToMet" class="hidden">
+        <div class="row">
+          <div class="grow"><label class="lbl" for="cFeet">Feet</label>
+            <input id="cFeet" class="big" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+          <div class="grow2"><label class="lbl" for="cInches">Inches (or "5 3/8")</label>
+            <input id="cInches" class="big" inputmode="text" autocomplete="off" placeholder="0"></div>
+        </div>
+        <label class="lbl" for="cFrac">Plus fraction</label>
+        <select id="cFrac" class="big"></select>
+        <div id="cMetOut"></div>
+      </div>
+      <div class="row btns">
+        <button class="btn primary" id="cSwap" type="button">⇄ Swap direction</button>
+        <button class="btn" id="cClear" type="button">Clear</button>
+      </div>
+      <p class="how">1 inch = 25.4 mm exactly. Fractions round to the nearest 1/16" and the note shows how far that rounding moved it.</p>
+    </section>
+
+    <!-- ============ PLATE WEIGHT ============ -->
+    <section id="tab-plate" class="panel hidden">
+      <h2>Plate Weight</h2>
+      <div class="lbl">Length &amp; width in</div>
+      <div class="seg" id="pLenUnit">
+        <button class="on" data-v="ft" type="button">feet</button>
+        <button data-v="in" type="button">inches</button>
+        <button data-v="mm" type="button">mm</button>
+        <button data-v="m" type="button">m</button>
+      </div>
+      <div id="pFtBoxes">
+        <div class="lbl">Length</div>
+        <div class="row">
+          <input id="pLFt" class="big grow" inputmode="decimal" autocomplete="off" placeholder="ft">
+          <input id="pLIn" class="big grow2" inputmode="text" autocomplete="off" placeholder="in">
+        </div>
+        <div class="lbl">Width</div>
+        <div class="row">
+          <input id="pWFt" class="big grow" inputmode="decimal" autocomplete="off" placeholder="ft">
+          <input id="pWIn" class="big grow2" inputmode="text" autocomplete="off" placeholder="in">
+        </div>
+      </div>
+      <div id="pOneBoxes" class="row hidden">
+        <div class="grow"><label class="lbl" for="pL" id="pLLbl">Length</label>
+          <input id="pL" class="big" inputmode="decimal" autocomplete="off"></div>
+        <div class="grow"><label class="lbl" for="pW" id="pWLbl">Width</label>
+          <input id="pW" class="big" inputmode="decimal" autocomplete="off"></div>
+      </div>
+      <div class="lbl">Thickness in</div>
+      <div class="seg" id="pThkUnit">
+        <button class="on" data-v="mm" type="button">mm</button>
+        <button data-v="in" type="button">inches</button>
+      </div>
+      <label class="lbl" for="pThk" id="pThkLbl">Thickness (mm)</label>
+      <input id="pThk" class="big" inputmode="decimal" autocomplete="off" placeholder="e.g. 14">
+      <div class="pad hidden" id="pThkFracs">
+        <button class="k frac" data-t="1/4">1/4"</button>
+        <button class="k frac" data-t="5/16">5/16"</button>
+        <button class="k frac" data-t="3/8">3/8"</button>
+        <button class="k frac" data-t="1/2">1/2"</button>
+        <button class="k frac" data-t="5/8">5/8"</button>
+        <button class="k frac" data-t="3/4">3/4"</button>
+        <button class="k frac" data-t="1">1"</button>
+      </div>
+      <div class="row">
+        <div class="grow"><label class="lbl" for="pQty">How many</label>
+          <input id="pQty" class="big" inputmode="numeric" autocomplete="off" value="1"></div>
+        <div class="grow2"><label class="lbl" for="pExtra">Add % for stiffeners/extras</label>
+          <input id="pExtra" class="big" inputmode="decimal" autocomplete="off" value="0"></div>
+      </div>
+      <label class="lbl" for="pMat">Material</label>
+      <select id="pMat" class="big">
+        <option value="mild">Mild steel (490 lb/ft³)</option>
+        <option value="stainless">Stainless (500 lb/ft³)</option>
+        <option value="alum">Aluminum (169 lb/ft³)</option>
+      </select>
+      <div id="pOut"></div>
+      <div class="row btns">
+        <button class="btn" id="pClear" type="button">Clear</button>
+      </div>
+      <p class="how">Weight = length × width × thickness × density (mild steel 490 lb/ft³, 7850 kg/m³). Pounds use the lb/ft³ figure and kilograms use the kg/m³ figure.</p>
+    </section>
+
+    <!-- ============ RECENT ============ -->
+    <section id="recentBox" class="panel hidden">
+      <div class="recentHead">
+        <h2 id="recentTitle">Recent</h2>
+        <button class="btn small" id="recentClear" type="button">Clear list</button>
+      </div>
+      <ol id="recentList" class="recent"></ol>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <h3>Put it on your home screen</h3>
+    <p><b>iPhone (Safari):</b> tap the Share button (square with an up arrow), then <b>Add to Home Screen</b>.</p>
+    <p><b>Android (Chrome):</b> tap the <b>⋮</b> menu, then <b>Install app</b> or <b>Add to Home screen</b>.</p>
+    <p class="dim">Works offline once it's opened. Nothing leaves your phone; history is saved only on this device.</p>
+  </footer>
+
+  <script src="./calc.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
