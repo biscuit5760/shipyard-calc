@@ -15,11 +15,28 @@
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body>
+<body class="fixed">
   <header class="top">
     <h1>Shipyard Calc</h1>
-    <button id="themeBtn" class="pill" type="button" aria-label="Switch light or dark">☀ Light</button>
+    <div class="topBtns">
+      <button id="shareBtn" class="pill share" type="button" aria-haspopup="dialog" aria-controls="shareOv">Share</button>
+      <button id="themeBtn" class="pill" type="button" aria-label="Switch light or dark">☀</button>
+    </div>
   </header>
+
+  <div id="shareOv" class="ov hidden" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <div class="ovCard">
+      <button id="shareClose" class="ovX" type="button" aria-label="Close">✕</button>
+      <h2 id="shareTitle">Scan to get Shipyard Calc</h2>
+      <div class="qrBox"><img src="./qr.svg" alt="QR code for https://biscuit5760.github.io/shipyard-calc/" width="410" height="410"></div>
+      <p class="qrUrl" id="shareUrl">https://biscuit5760.github.io/shipyard-calc/</p>
+      <div class="row btns ovBtns">
+        <button class="btn primary" id="shareCopy" type="button">Copy link</button>
+        <button class="btn hidden" id="shareSend" type="button">Send link</button>
+      </div>
+      <p class="dim ovHint">Point their phone camera at the code. No phone numbers needed.</p>
+    </div>
+  </div>
 
   <nav class="tabs" role="tablist">
     <button class="tab active" data-tab="frac" type="button">Tape Fractions</button>
@@ -30,12 +47,16 @@
   <main>
     <!-- ============ TAPE FRACTIONS ============ -->
     <section id="tab-frac" class="panel">
-      <h2>Tape-Measure Fractions</h2>
+      <h2 class="fracH">Tape-Measure Fractions</h2>
       <div class="screen">
-        <div id="fExpr" class="expr">Type a number, then tap a fraction</div>
-        <div id="fRes" class="res"></div>
+        <div id="fExpr" class="expr" aria-live="polite">Type a number, then tap a fraction</div>
+        <div id="fRes" class="res" aria-live="polite"></div>
       </div>
-      <div id="fMore"></div>
+      <div id="fMore" class="fMore"></div>
+      <div id="fScroll" class="fScroll">
+        <p class="how">Type the whole number, then tap its fraction: 25 then ½ is 25 ½. Tap ft ' after a number for feet, like 3 ft ' 4 ½. ⌫ takes back only the last thing you pressed. After =, tap an operator to keep going from the answer.</p>
+      </div>
+      <div class="keys" id="fKeys">
       <div class="pad" id="fracPad">
         <button class="k frac" data-k="f8">½</button>
         <button class="k frac" data-k="f4">¼</button>
@@ -76,7 +97,7 @@
         <button class="k util" id="fClear">C</button>
         <button class="k eq" id="fEq">=</button>
       </div>
-      <p class="how">Type the whole number, then tap its fraction: 25 then ½ is 25 ½. Tap ft ' after a number for feet, like 3 ft ' 4 ½. ⌫ takes back only the last thing you pressed. After =, tap an operator to keep going from the answer.</p>
+      </div>
     </section>
 
     <!-- ============ METRIC <-> IMPERIAL ============ -->
@@ -94,7 +115,7 @@
         </div>
         <label class="lbl" for="cMetric" id="cMetricLbl">Measurement in mm</label>
         <input id="cMetric" class="big" inputmode="decimal" autocomplete="off" placeholder="Type mm">
-        <div id="cImpOut"></div>
+        <div id="cImpOut" class="outBox"></div>
       </div>
       <div id="cToMet" class="hidden">
         <div class="row">
@@ -105,7 +126,7 @@
         </div>
         <label class="lbl" for="cFrac">Plus fraction</label>
         <select id="cFrac" class="big"></select>
-        <div id="cMetOut"></div>
+        <div id="cMetOut" class="outBox"></div>
       </div>
       <div class="row btns">
         <button class="btn primary" id="cSwap" type="button">⇄ Swap direction</button>
@@ -170,7 +191,7 @@
         <option value="stainless">Stainless (500 lb/ft³)</option>
         <option value="alum">Aluminum (169 lb/ft³)</option>
       </select>
-      <div id="pOut"></div>
+      <div id="pOut" class="outBox"></div>
       <div class="row btns">
         <button class="btn" id="pClear" type="button">Clear</button>
       </div>

@@ -53,7 +53,8 @@
   // ---------- theme ----------
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
-    $("themeBtn").textContent = t === "dark" ? "☀ Light" : "☾ Dark";
+    $("themeBtn").textContent = t === "dark" ? "☀" : "☾";
+    $("themeBtn").setAttribute("aria-label", t === "dark" ? "Switch to light" : "Switch to dark");
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", t === "dark" ? "#0b0d10" : "#ffffff");
   }
@@ -73,9 +74,59 @@
       tool = b.getAttribute("data-tab");
       Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (x) { x.classList.toggle("active", x === b); });
       ["frac", "conv", "plate"].forEach(function (t) { $("tab-" + t).classList.toggle("hidden", t !== tool); });
+      layoutMode();
       renderRecent();
     });
   });
+
+  // ---------- steady layout ----------
+  var recentHome = $("recentBox").parentNode;
+  function layoutMode() {
+    var fixed = tool === "frac";
+    document.body.classList.toggle("fixed", fixed);
+    var box = $("recentBox");
+    if (fixed) $("fScroll").appendChild(box); else recentHome.appendChild(box);
+    if (fixed) { window.scrollTo(0, 0); sizeKeys(); }
+  }
+  function sizeKeys() {
+    if (tool !== "frac") return;
+    var keys = $("fKeys"), panel = $("tab-frac");
+    var rows = 7 + ($("pad16").classList.contains("hidden") ? 0 : 2);
+    var gaps = (rows - 1) * 8;
+    var top = $("fScroll").getBoundingClientRect().top;
+    var bottomPad = 12 + 8 + 1 + (parseFloat(getComputedStyle(document.body).paddingBottom) || 0);
+    var minScroll = 30;
+    var avail = window.innerHeight - top - bottomPad - minScroll - gaps + 6 * (rows - 5);
+    var kh = Math.max(42, Math.min(68, Math.floor(avail / rows)));
+    document.documentElement.style.setProperty("--kh", kh + "px");
+  }
+  var lastW = 0, lastH = 0;
+  window.addEventListener("resize", function () {
+    // only re-measure on real size changes (rotation), not on tiny toolbar changes
+    if (Math.abs(window.innerWidth - lastW) > 40 || Math.abs(window.innerHeight - lastH) > 120) {
+      lastW = window.innerWidth; lastH = window.innerHeight; sizeKeys();
+    }
+  });
+  // fit long text inside the fixed display without growing it
+  function fitText(node, max, min) {
+    var size = max;
+    node.style.fontSize = size + "px";
+    while (node.scrollWidth > node.clientWidth && size > min) { size -= 2; node.style.fontSize = size + "px"; }
+  }
+
+  // result boxes on the typing tabs only ever grow, so deleting a digit never yanks the page
+  function reserveOut() {
+    Array.prototype.forEach.call(document.querySelectorAll(".outBox"), function (box) {
+      var maxH = 0;
+      function ratchet() {
+        if (box.offsetParent === null) return; // hidden tab
+        var h = box.offsetHeight;
+        if (h > maxH) { maxH = h; box.style.minHeight = h + "px"; }
+      }
+      if (window.MutationObserver) new MutationObserver(ratchet).observe(box, { childList: true, subtree: true, characterData: true });
+      ratchet();
+    });
+  }
 
   // ---------- recent list ----------
   function pushRecent(which, from, to, dedupe) {
@@ -117,9 +168,14 @@
     $("fRes").textContent = r === "div0" ? "Can't divide by 0" : f ? (fresh ? "" : "= ") + f.text : "";
     fill($("fMore"), f ? [
       f.ftIn ? cell("Feet & inches", f.ftIn) : null,
-      cell("Decimal inches · mm", f.dec + "  ·  " + f.mm, false,
+      cell("Decimal · mm", f.dec + "  ·  " + f.mm, false,
         f.isExact ? 'exact to 1/16"' : 'rounded to nearest 1/16" ' + SC.diffNote(f.diff))
     ] : []);
+    var ex = $("fExpr");
+    fitText(ex, 22, 15);
+    ex.scrollLeft = ex.scrollWidth; // keep the newest entry in view (scrolls inside the display only)
+    fitText($("fRes"), 42, 20);
+    Array.prototype.forEach.call($("fMore").querySelectorAll(".v-mid"), function (v) { fitText(v, 19, 13); });
   }
   function tap(key) {
     var isOp = key === "+" || key === "\u2212" || key === "\u00d7" || key === "\u00f7";
@@ -137,6 +193,7 @@
   $("t16").addEventListener("click", function () {
     var open = $("pad16").classList.toggle("hidden") === false;
     $("t16").classList.toggle("on", open);
+    sizeKeys();
   });
   $("fBack").addEventListener("click", function () { toks = toks.slice(0, -1); fresh = false; lastExpr = ""; renderFrac(); });
   $("fClear").addEventListener("click", function () { toks = []; fresh = false; lastExpr = ""; renderFrac(); });
@@ -306,7 +363,39 @@
   });
   renderPlate();
 
+  lastW = window.innerWidth; lastH = window.innerHeight;
+  layoutMode();
   renderRecent();
+  reserveOut();
+
+  // ---------- share / QR ----------
+  var SHARE_URL = "https://biscuit5760.github.io/shipyard-calc/";
+  var ov = $("shareOv"), lastFocus = null;
+  function openShare() { lastFocus = document.activeElement; ov.classList.remove("hidden"); $("shareCopy").textContent = "Copy link"; $("shareClose").focus({ preventScroll: true }); }
+  function closeShare() { ov.classList.add("hidden"); if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }
+  $("shareBtn").addEventListener("click", openShare);
+  $("shareClose").addEventListener("click", closeShare);
+  ov.addEventListener("click", function (e) { if (e.target === ov) closeShare(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !ov.classList.contains("hidden")) closeShare(); });
+  function copied(ok) { $("shareCopy").textContent = ok ? "Copied ✓" : "Press and hold the link to copy"; }
+  function fallbackCopy() {
+    try {
+      var ta = document.createElement("textarea"); ta.value = SHARE_URL; ta.setAttribute("readonly", "");
+      ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select();
+      var ok = document.execCommand("copy"); document.body.removeChild(ta); copied(ok);
+    } catch (e) { copied(false); }
+  }
+  $("shareCopy").addEventListener("click", function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(SHARE_URL).then(function () { copied(true); }, fallbackCopy);
+    } else fallbackCopy();
+  });
+  if (navigator.share) {
+    $("shareSend").classList.remove("hidden");
+    $("shareSend").addEventListener("click", function () {
+      navigator.share({ title: "Shipyard Calc", text: "Shipyard Calc - tape fractions, metric to imperial, plate weight:", url: SHARE_URL }).catch(function () { /* cancelled */ });
+    });
+  }
 
   // ---------- offline ----------
   if ("serviceWorker" in navigator && location.protocol !== "file:") {

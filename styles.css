@@ -64,3 +64,64 @@ input.big:focus, select.big:focus { border-color: var(--accent); }
 .foot { max-width: 720px; margin: 8px auto 30px; padding: 0 16px; font-size: 17px; color: var(--dim); }
 .foot b { color: var(--text); }
 .foot .dim { font-size: 15px; }
+
+/* ---------- share / QR ---------- */
+.topBtns { display: flex; gap: 8px; }
+.pill.share { background: var(--accent); color: var(--accentText); border-color: var(--accent); }
+.ov { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.82); display: flex; align-items: center; justify-content: center; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.ovCard { position: relative; width: 100%; max-width: 460px; max-height: 100%; overflow: auto; background: #111111; color: #ffffff; border: 3px solid #ffb000; border-radius: 18px; padding: 18px 16px 16px; text-align: center; }
+.ovCard h2 { margin: 6px 44px 14px; font-size: 24px; color: #ffffff; }
+.ovX { position: absolute; top: 8px; right: 8px; width: 48px; height: 48px; border-radius: 999px; border: 2px solid #ffb000; background: #111111; color: #ffb000; font-size: 22px; font-weight: 800; cursor: pointer; }
+.qrBox { background: #ffffff; border-radius: 10px; padding: 8px; margin: 0 auto; width: 100%; max-width: 360px; }
+.qrBox img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.qrUrl { font-size: 14px; color: #d0d6dc; word-break: break-all; margin: 12px 0 6px; user-select: all; -webkit-user-select: all; }
+.ovBtns { justify-content: center; }
+.ovBtns .btn { flex: 1 1 40%; }
+.ovCard .btn.primary { background: #ffb000; color: #111111; border-color: #ffb000; }
+.ovHint { font-size: 14px; margin: 10px 0 0; color: #b9c2cc; }
+.ovCard .btn:not(.primary) { background: #2e3742; color: #ffffff; border-color: #7d8a98; }
+[data-theme="light"] .pill.share { background: #ffb000; color: #111111; border-color: #111111; }
+
+/* ---------- no-jump layout (v2) ---------- */
+html, body { overscroll-behavior: none; }
+button, input, select, .tab, .seg button, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+input, select, textarea { font-size: max(16px, 1em); }
+.top { flex-wrap: nowrap; padding: 10px 14px 4px; }
+.top h1 { font-size: clamp(21px, 6.4vw, 28px); white-space: nowrap; }
+.topBtns { flex: none; }
+#themeBtn { min-width: 48px; padding: 6px 10px; font-size: 18px; }
+.tabs { padding: 6px 12px 10px; }
+.tab { min-height: 52px; }
+
+/* calculator display: fixed size, never grows */
+#tab-frac .screen { height: 104px; min-height: 0; flex: none; justify-content: center; overflow: hidden; padding: 8px 14px; gap: 2px; }
+#tab-frac .expr { height: 32px; min-height: 0; line-height: 32px; font-size: 22px; white-space: nowrap; overflow-x: auto; overflow-y: hidden; word-break: normal; scrollbar-width: none; overscroll-behavior: contain; }
+#tab-frac .expr::-webkit-scrollbar { display: none; }
+#tab-frac .res { height: 52px; line-height: 52px; font-size: 42px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
+/* feet-inches / decimal / mm lines: reserved space */
+.fMore { height: 58px; flex: none; overflow: hidden; margin: 0 0 6px; }
+.fMore .cell { padding: 0; border: 0; display: flex; align-items: baseline; gap: 8px; height: 29px; line-height: 29px; white-space: nowrap; overflow: hidden; }
+.fMore .cell .lbl { margin: 0; font-size: 14px; flex: none; }
+.fMore .cell .v-mid { font-size: 19px; overflow: hidden; text-overflow: ellipsis; }
+.fMore .cell .note { display: none; }
+.fScroll .how { margin: 4px 0 8px; font-size: 15px; }
+.keys { flex: none; }
+.keys .pad { margin: 0 0 8px; }
+.keys .pad:last-child { margin-bottom: 0; }
+
+/* Tape tab: whole app fits one screen, keypad pinned to the bottom, page never scrolls */
+body.fixed { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+body.fixed .top, body.fixed .tabs { flex: none; width: 100%; }
+body.fixed main { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; padding-bottom: 8px; }
+body.fixed #tab-frac { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; padding: 10px 12px 12px; overflow: hidden; }
+body.fixed .fracH { display: none; }
+body.fixed .fScroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+body.fixed .fScroll .panel { padding: 8px 0 0; margin: 0; border: 0; background: none; }
+body.fixed .fScroll .recent li { padding: 6px 0; }
+body.fixed .foot { display: none; }
+body.fixed .keys .k { min-height: 0; height: var(--kh, 60px); }
+body.fixed .keys .k.frac { height: calc(var(--kh, 60px) - 6px); }
+body:not(.fixed) .fScroll { margin-bottom: 8px; }
+
+/* other tabs: result boxes keep their space so the page doesn't jump */
+.outBox { min-height: var(--outH, 0px); }

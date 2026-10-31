@@ -1,5 +1,5 @@
 /* Shipyard Calc - offline cache. Bump VERSION when any file changes. */
-var VERSION = "shipyard-calc-v1";
+var VERSION = "shipyard-calc-v2";
 var FILES = [
   "./",
   "./index.html",
@@ -10,7 +10,8 @@ var FILES = [
   "./icon-192.png",
   "./icon-512.png",
   "./icon-maskable-512.png",
-  "./apple-touch-icon.png"
+  "./apple-touch-icon.png",
+  "./qr.svg"
 ];
 
 self.addEventListener("install", function (e) {

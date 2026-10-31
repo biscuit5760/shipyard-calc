@@ -5,7 +5,7 @@ Offline calculator for the shipyard: tape-measure fractions, metric ⇄ imperial
 Plain static files, no build step, no outside network calls. Open `index.html` from any web host.
 
 ## Put it on GitHub Pages
-1. Make a public repo named `shipyard-calc` and upload everything in this folder (keep the `icons` folder).
+1. Make a public repo named `shipyard-calc` and upload everything in this folder (all files sit flat at the top level, no folders).
 2. Repo Settings → Pages → Source: "Deploy from a branch", branch `main`, folder `/ (root)`.
 3. After a minute it's live at `https://YOUR-USERNAME.github.io/shipyard-calc/`.
 
