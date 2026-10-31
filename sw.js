@@ -1,10 +1,11 @@
 /* Shipyard Calc - offline cache. Bump VERSION when any file changes. */
-var VERSION = "shipyard-calc-v4";
+var VERSION = "shipyard-calc-v5";
 var FILES = [
   "./",
   "./index.html",
   "./styles.css",
   "./calc.js",
+  "./i18n.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icon-192.png",

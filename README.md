@@ -1,6 +1,6 @@
 # Shipyard Calc
 
-Offline calculator for the shipyard: tape-measure fractions, metric ⇄ imperial, and steel plate weight.
+Offline calculator for the shipyard: tape-measure fractions, metric ⇄ imperial, and steel plate weight. Shows Spanish automatically when the phone is set to Spanish (words live in `i18n.js`).
 
 Plain static files, no build step, no outside network calls. Open `index.html` from any web host.
 

@@ -54,10 +54,12 @@
     return v;
   }
 
-  function diffNote(d) {
-    if (Math.abs(d) < 0.0005) return "exact";
+  // words: optional { exact: "...", fromExact: "..." } for other languages
+  function diffNote(d, words) {
+    var w = words || { exact: "exact", fromExact: "from exact" };
+    if (Math.abs(d) < 0.0005) return w.exact;
     var sign = d > 0 ? "+" : "\u2212";
-    return "(" + sign + Math.abs(d).toFixed(3) + '" from exact)';
+    return "(" + sign + Math.abs(d).toFixed(3) + '" ' + w.fromExact + ")";
   }
 
   // ---------- Tape-measure fractions (exact rational math) ----------
@@ -245,14 +247,13 @@
     return unit === "mm" ? parseNum(s) / 304.8 : parseInches(s) / 12;
   }
 
-  // L, W, T in feet; qty count; extraPct percent
-  function plate(L, W, T, qty, extraPct, mat) {
+  // L, W, T in feet; qty count
+  function plate(L, W, T, qty, mat) {
     var m = MATS[mat] || MATS.mild;
     var ok = [L, W, T, qty].every(function (v) { return isFinite(v) && v > 0; });
     if (!ok) return null;
-    var x = isFinite(extraPct) ? extraPct : 0;
     var area = L * W;
-    var vol = area * T * (1 + x / 100);
+    var vol = area * T;
     var pieceLb = vol * m.lb, pieceKg = vol * FT3_TO_M3 * m.kg;
     return {
       area: area,

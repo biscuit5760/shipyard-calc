@@ -5,6 +5,10 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   "use strict";
   var SC = window.SC;
   var $ = function (id) { return document.getElementById(id); };
+  var T = window.I18N.T;
+  window.I18N.apply(document);
+  var DW = { exact: T("exact"), fromExact: T("fromExact") }; // words for the rounding note
+  var uName = function (u) { return u === "ft" ? T("phFt") : u === "in" ? T("phIn") : u; };
 
   // ---------- storage ----------
   var KEYS = { conv: "shipyard-calc-recent", frac: "shipyard-frac-recent", plate: "shipyard-plate-recent" };
@@ -56,7 +60,7 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
     $("themeBtn").textContent = t === "dark" ? "☀" : "☾";
-    $("themeBtn").setAttribute("aria-label", t === "dark" ? "Switch to light" : "Switch to dark");
+    $("themeBtn").setAttribute("aria-label", t === "dark" ? T("toLight") : T("toDark"));
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", t === "dark" ? "#0b0d10" : "#ffffff");
   }
@@ -139,11 +143,11 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   function renderRecent() {
     var list = recent[tool];
     $("recentBox").classList.toggle("hidden", list.length === 0);
-    $("recentTitle").textContent = tool === "conv" ? "Recent conversions" : tool === "frac" ? "Recent math" : "Recent plates";
+    $("recentTitle").textContent = tool === "conv" ? T("recentConv") : tool === "frac" ? T("recentFrac") : T("recentPlate");
     fill($("recentList"), list.map(function (r) {
       var li = el("li");
       li.appendChild(el("div", "r-to", r.to));
-      li.appendChild(el("div", "r-from", tool === "conv" ? "from " + r.from : tool === "frac" ? r.from + " =" : r.from));
+      li.appendChild(el("div", "r-from", tool === "conv" ? T("from") + r.from : tool === "frac" ? r.from + " =" : r.from));
       return li;
     }));
   }
@@ -161,16 +165,15 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
     var r = SC.evaluate(toks);
     var f = r !== null && r !== "div0" ? SC.fmtQ(r) : null;
     var exprLine = fresh ? lastExpr + " =" : SC.showExpr(toks);
-    $("fExpr").textContent = exprLine || "Type a number, then tap a fraction";
-    $("fRes").textContent = r === "div0" ? "Can't divide by 0" : f ? (fresh ? "" : f.isExact ? "= " : "\u2248 ") + f.text : "";
+    $("fExpr").textContent = exprLine || T("fStart");
+    $("fRes").textContent = r === "div0" ? T("div0") : f ? (fresh ? "" : f.isExact ? "= " : "\u2248 ") + f.text : "";
     fill($("fMore"), f ? [
-      f.ftIn ? cell("Feet & inches", f.ftIn) : null,
-      cell("Decimal · mm", f.dec + "  ·  " + f.mm, false,
-        f.isExact ? 'exact to 1/16"' : 'rounded to nearest 1/16" ' + SC.diffNote(f.diff)),
-      el("div", "fNote", f.isExact ? "Exact tape mark" : "Nearest 1/16\" " + SC.diffNote(f.diff))
+      f.ftIn ? cell(T("ftIn"), f.ftIn) : null,
+      cell(T("decMm"), f.dec + "  ·  " + f.mm),
+      el("div", "fNote", f.isExact ? T("exactMark") : T("nearest") + SC.diffNote(f.diff, DW))
     ] : [
-      el("div", "fHint", "25 then ½ = 25 ½ · 3 ft ' 4 = 3' 4\""),
-      el("div", "fHint", "Decimals too: 12.83 → nearest 1/16\"")
+      el("div", "fHint", T("hint1")),
+      el("div", "fHint", T("hint2"))
     ]);
     var ex = $("fExpr");
     fitText(ex, 22, 15);
@@ -215,7 +218,7 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   // Metric <-> Imperial
   // =====================================================
   var fracSel = $("cFrac");
-  [{ v: "0", l: "none" }].concat(Array.from({ length: 15 }, function (_, i) {
+  [{ v: "0", l: T("none") }].concat(Array.from({ length: 15 }, function (_, i) {
     return { v: String(i + 1), l: SC.fracStr(i + 1) + '"' };
   })).forEach(function (o) { var op = el("option", null, o.l); op.value = o.v; fracSel.appendChild(op); });
 
@@ -233,29 +236,29 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   }
   function renderConv() {
     var c = convCalc();
-    $("cHead").textContent = dir === "toImp" ? "Metric → Inches & Feet" : "Feet & Inches → Metric";
+    $("cHead").textContent = dir === "toImp" ? T("cHeadImp") : T("cHeadMet");
     $("cToImp").classList.toggle("hidden", dir !== "toImp");
     $("cToMet").classList.toggle("hidden", dir !== "toMet");
-    $("cMetricLbl").textContent = "Measurement in " + unit;
-    $("cMetric").placeholder = "Type " + unit;
+    $("cMetricLbl").textContent = T("measIn", { u: unit });
+    $("cMetric").placeholder = T("typeU", { u: unit });
     if (c.imp) {
       fill($("cImpOut"), [
-        cell('Feet & inches (nearest 1/16")', c.imp.ftIn, true, SC.diffNote(c.imp.diff)),
-        cell("Inches with fraction", c.imp.tot),
-        cell("Decimal inches", c.imp.dec),
-        cell("Decimal feet", c.imp.ft)
+        cell(T("ftInNear"), c.imp.ftIn, true, SC.diffNote(c.imp.diff, DW)),
+        cell(T("inFrac"), c.imp.tot),
+        cell(T("decIn"), c.imp.dec),
+        cell(T("decFt"), c.imp.ft)
       ]);
     } else {
-      fill($("cImpOut"), c.metric.trim() !== "" ? [el("div", "note", "Numbers only, like 1250 or 12.5")] : []);
+      fill($("cImpOut"), c.metric.trim() !== "" ? [el("div", "note", T("numOnly"))] : []);
     }
     if (c.metOk) {
       fill($("cMetOut"), [
-        cell("Millimeters", SC.fmtMm(c.outMm) + " mm", true),
-        cell("Centimeters", (c.outMm / 10).toFixed(2) + " cm"),
-        cell("Meters", (c.outMm / 1000).toFixed(3) + " m")
+        cell(T("mmL"), SC.fmtMm(c.outMm) + " mm", true),
+        cell(T("cmL"), (c.outMm / 10).toFixed(2) + " cm"),
+        cell(T("mL"), (c.outMm / 1000).toFixed(3) + " m")
       ]);
     } else {
-      fill($("cMetOut"), (c.feet.trim() !== "" || c.inches.trim() !== "") ? [el("div", "note", "Try feet like 3, inches like 5 3/8 or 5.375")] : []);
+      fill($("cMetOut"), (c.feet.trim() !== "" || c.inches.trim() !== "") ? [el("div", "note", T("tryFt"))] : []);
     }
     // save after 1.5 s of no typing
     var from = dir === "toImp"
@@ -300,13 +303,13 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
     var ftMode = lenUnit === "ft";
     $("pFtBoxes").classList.toggle("hidden", !ftMode);
     $("pOneBoxes").classList.toggle("hidden", ftMode);
-    $("pLLbl").textContent = "Length (" + lenUnit + ")";
-    $("pWLbl").textContent = "Width (" + lenUnit + ")";
-    $("pL").placeholder = lenUnit; $("pW").placeholder = lenUnit;
+    $("pLLbl").textContent = T("lenU", { u: uName(lenUnit) });
+    $("pWLbl").textContent = T("widU", { u: uName(lenUnit) });
+    $("pL").placeholder = uName(lenUnit); $("pW").placeholder = uName(lenUnit);
     var inMode = lenUnit === "in" ? "text" : "decimal";
     $("pL").setAttribute("inputmode", inMode); $("pW").setAttribute("inputmode", inMode);
-    $("pThkLbl").textContent = thkUnit === "mm" ? "Thickness (mm)" : "Thickness (inches)";
-    $("pThk").placeholder = thkUnit === "mm" ? "e.g. 14" : "e.g. 1/2";
+    $("pThkLbl").textContent = thkUnit === "mm" ? T("thkMm") : T("thkInch");
+    $("pThk").placeholder = thkUnit === "mm" ? T("eg14") : T("egHalf");
     $("pThk").setAttribute("inputmode", thkUnit === "mm" ? "decimal" : "text");
     $("pThkFracs").classList.toggle("hidden", thkUnit !== "in");
     var thk = $("pThk").value;
@@ -316,34 +319,31 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
 
     var la = ftMode ? $("pLFt").value : $("pL").value, lb = ftMode ? $("pLIn").value : "";
     var wa = ftMode ? $("pWFt").value : $("pW").value, wb = ftMode ? $("pWIn").value : "";
-    var L = SC.lenToFt(lenUnit, la, lb), W = SC.lenToFt(lenUnit, wa, wb), T = SC.thkToFt(thkUnit, thk);
-    var qs = $("pQty").value, xs = $("pExtra").value;
+    var L = SC.lenToFt(lenUnit, la, lb), W = SC.lenToFt(lenUnit, wa, wb), Th = SC.thkToFt(thkUnit, thk);
+    var qs = $("pQty").value;
     var qRaw = qs.trim() === "" ? 1 : SC.parseNum(qs);
     var Q = isFinite(qRaw) && qRaw > 0 ? qRaw : NaN;
-    var xRaw = xs.trim() === "" ? 0 : SC.parseNum(xs);
-    var X = isFinite(xRaw) ? xRaw : 0;
     var mat = $("pMat").value;
-    var r = SC.plate(L, W, T, Q, X, mat);
+    var r = SC.plate(L, W, Th, Q, mat);
     if (!r) { fill($("pOut"), []); if (plateTimer) clearTimeout(plateTimer); return; }
 
     var tot = el("div", "cell");
-    tot.appendChild(el("div", "lbl", Q > 1 ? "Total weight (" + Q + " pieces)" : "Total weight"));
+    tot.appendChild(el("div", "lbl", Q > 1 ? T("totN", { n: Q }) : T("tot")));
     tot.appendChild(el("div", "v-big", SC.fmtWt(r.totLb) + " lb"));
-    if (r.totLb >= 1000) tot.appendChild(el("div", "v-mid", SC.fmtNum(r.tons, 2) + " tons (2,000 lb)"));
+    if (r.totLb >= 1000) tot.appendChild(el("div", "v-mid", T("tons", { t: SC.fmtNum(r.tons, 2) })));
     fill($("pOut"), [
       tot,
-      cell("Metric", SC.fmtWt(r.totKg) + " kg  ·  " + SC.fmtNum(r.tonnes, 2) + " t"),
-      Q > 1 ? cell("Each piece", SC.fmtWt(r.pieceLb) + " lb  ·  " + SC.fmtWt(r.pieceKg) + " kg") : null,
-      cell("Plate area · weight per sq ft", SC.fmtNum(r.area, 1) + " ft²  ·  " + SC.fmtNum(r.lbPerFt2, 2) + " lb/ft²", false,
-        X ? "Totals include +" + X + "% for stiffeners/extras" : ""),
-      el("div", "note", "Estimate for flat plate only. Always confirm the lift weight and rigging with your rigging plan or lift supervisor.")
+      cell(T("metric"), SC.fmtWt(r.totKg) + " kg  ·  " + SC.fmtNum(r.tonnes, 2) + " t"),
+      Q > 1 ? cell(T("each"), SC.fmtWt(r.pieceLb) + " lb  ·  " + SC.fmtWt(r.pieceKg) + " kg") : null,
+      cell(T("area"), SC.fmtNum(r.area, 1) + " ft²  ·  " + SC.fmtNum(r.lbPerFt2, 2) + " lb/ft²"),
+      el("div", "note", T("safety"))
     ]);
 
     var dim = function (a, b) {
       return ftMode ? (a.trim() || "0") + "'" + (b.trim() ? " " + b.trim() + '"' : "") : a.trim() + " " + lenUnit;
     };
     var from = (Q > 1 ? Q + " × " : "") + dim(la, lb) + " x " + dim(wa, wb) + " x " + thk.trim() +
-      (thkUnit === "mm" ? " mm" : '"') + " " + SC.MATS[mat].name + (X ? " +" + X + "%" : "");
+      (thkUnit === "mm" ? " mm" : '"') + " " + T({ mild: "nmMild", stainless: "nmStain", alum: "nmAlum" }[mat]);
     var to = SC.fmtWt(r.totLb) + " lb  ·  " + SC.fmtWt(r.totKg) + " kg";
     if (plateTimer) clearTimeout(plateTimer);
     plateTimer = setTimeout(function () { pushRecent("plate", from, to, true); }, 1500);
@@ -351,7 +351,7 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   function clearLen() { ["pLFt", "pLIn", "pWFt", "pWIn", "pL", "pW"].forEach(function (id) { $(id).value = ""; }); }
   bindSeg($("pLenUnit"), function (v) { lenUnit = v; clearLen(); renderPlate(); });
   bindSeg($("pThkUnit"), function (v) { thkUnit = v; $("pThk").value = ""; renderPlate(); });
-  ["pLFt", "pLIn", "pWFt", "pWIn", "pL", "pW", "pThk", "pQty", "pExtra"].forEach(function (id) {
+  ["pLFt", "pLIn", "pWFt", "pWIn", "pL", "pW", "pThk", "pQty"].forEach(function (id) {
     $(id).addEventListener("input", renderPlate);
   });
   $("pMat").addEventListener("change", renderPlate);
@@ -360,7 +360,7 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
     if (b) { $("pThk").value = b.getAttribute("data-t"); renderPlate(); }
   });
   $("pClear").addEventListener("click", function () {
-    clearLen(); $("pThk").value = ""; $("pQty").value = "1"; $("pExtra").value = "0"; renderPlate();
+    clearLen(); $("pThk").value = ""; $("pQty").value = "1"; renderPlate();
   });
   renderPlate();
 
@@ -371,13 +371,14 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   // ---------- share / QR ----------
   var SHARE_URL = "https://biscuit5760.github.io/shipyard-calc/";
   var ov = $("shareOv"), lastFocus = null;
-  function openShare() { lastFocus = document.activeElement; ov.classList.remove("hidden"); $("shareCopy").textContent = "Copy link"; $("shareClose").focus({ preventScroll: true }); }
+  document.querySelector(".qrBox img").alt = T("qrAlt", { u: SHARE_URL });
+  function openShare() { lastFocus = document.activeElement; ov.classList.remove("hidden"); $("shareCopy").textContent = T("copy"); $("shareClose").focus({ preventScroll: true }); }
   function closeShare() { ov.classList.add("hidden"); if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }
   $("shareBtn").addEventListener("click", openShare);
   $("shareClose").addEventListener("click", closeShare);
   ov.addEventListener("click", function (e) { if (e.target === ov) closeShare(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !ov.classList.contains("hidden")) closeShare(); });
-  function copied(ok) { $("shareCopy").textContent = ok ? "Copied ✓" : "Press and hold the link to copy"; }
+  function copied(ok) { $("shareCopy").textContent = ok ? T("copied") : T("copyFail"); }
   function fallbackCopy() {
     try {
       var ta = document.createElement("textarea"); ta.value = SHARE_URL; ta.setAttribute("readonly", "");
@@ -393,7 +394,7 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   if (navigator.share) {
     $("shareSend").classList.remove("hidden");
     $("shareSend").addEventListener("click", function () {
-      navigator.share({ title: "Shipyard Calc", text: "Shipyard Calc - tape fractions, metric to imperial, plate weight:", url: SHARE_URL }).catch(function () { /* cancelled */ });
+      navigator.share({ title: "Shipyard Calc", text: T("shareText"), url: SHARE_URL }).catch(function () { /* cancelled */ });
     });
   }
 
