@@ -34,7 +34,7 @@ main { max-width: 720px; margin: 0 auto; padding: 0 12px; }
 .k:active, .k.on { background: var(--pressed); }
 .k.num { background: var(--key); }
 .k.frac { min-height: 56px; font-size: 24px; }
-.k.eq { grid-column: span 3; background: var(--accent); color: var(--accentText); border-color: var(--accent); font-size: 32px; }
+.k.eq { grid-column: span 2; background: var(--accent); color: var(--accentText); border-color: var(--accent); font-size: 32px; }
 .cell { padding: 12px 0; border-top: 1px solid var(--line); }
 .lbl { display: block; font-size: 17px; color: var(--dim); margin: 12px 0 6px; }
 .v-big { font-size: 40px; font-weight: 800; line-height: 1.15; }
@@ -105,12 +105,9 @@ input, select, textarea { font-size: max(16px, 1em); }
 .fMore .cell .v-mid { font-size: 19px; overflow: hidden; text-overflow: ellipsis; }
 .fMore .cell .note { display: none; }
 .fScroll .how { margin: 4px 0 8px; font-size: 15px; }
-.keys { flex: none; }
-.keys .pad { margin: 0 0 8px; }
-.keys .pad:last-child { margin-bottom: 0; }
 
 /* Tape tab: whole app fits one screen, keypad pinned to the bottom, page never scrolls */
-body.fixed { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+body.fixed { height: 100vh; height: var(--appH, 100dvh); overflow: hidden; display: flex; flex-direction: column; }
 body.fixed .top, body.fixed .tabs { flex: none; width: 100%; }
 body.fixed main { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; padding-bottom: 8px; }
 body.fixed #tab-frac { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; margin-bottom: 0; padding: 10px 12px 12px; overflow: hidden; }
@@ -119,9 +116,50 @@ body.fixed .fScroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-b
 body.fixed .fScroll .panel { padding: 8px 0 0; margin: 0; border: 0; background: none; }
 body.fixed .fScroll .recent li { padding: 6px 0; }
 body.fixed .foot { display: none; }
-body.fixed .keys .k { min-height: 0; height: var(--kh, 60px); }
-body.fixed .keys .k.frac { height: calc(var(--kh, 60px) - 6px); }
 body:not(.fixed) .fScroll { margin-bottom: 8px; }
 
 /* other tabs: result boxes keep their space so the page doesn't jump */
 .outBox { min-height: var(--outH, 0px); }
+
+/* ---------- v3: keypad fills the real visible screen, never overflows ---------- */
+.k.dot { font-size: 34px; line-height: 1; }
+body.fixed { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.fMore { height: 68px; }
+.fMore .cell { height: 25px; line-height: 25px; }
+.fMore .fNote { height: 18px; line-height: 18px; font-size: 13px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* one 4-column grid for all key rows; rows share the leftover height evenly */
+.keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.keys .pad { display: contents; }
+.keys .k { min-height: 0; }
+body:not(.fixed) .keys { grid-auto-rows: 60px; }
+body.fixed .keys { --rows: 7; flex: 1 1 auto; min-height: 0; grid-auto-rows: minmax(0, 1fr); max-height: calc(var(--rows) * 76px + (var(--rows) - 1) * 8px); }
+body.fixed .keys.open16 { --rows: 9; }
+body.fixed .keys .k.frac { font-size: 22px; }
+/* history/help only takes space the keys don't need (keys stop growing at 76px) */
+body.fixed .fScroll { flex: 0.0001 1 0; }
+/* short screens: tighten everything above the keys */
+@media (max-height: 760px) {
+  body.fixed .top { padding: 6px 12px 2px; }
+  body.fixed .top h1 { font-size: 22px; }
+  body.fixed .pill { min-height: 40px; padding: 4px 12px; }
+  body.fixed .tabs { padding: 4px 10px 6px; gap: 6px; }
+  body.fixed .tab { min-height: 44px; font-size: 16px; line-height: 1.15; padding: 4px 6px; }
+  body.fixed #tab-frac { padding: 8px 10px 10px; }
+  body.fixed #tab-frac .screen { height: 84px; padding: 4px 12px; margin-bottom: 6px; }
+  body.fixed #tab-frac .expr { height: 28px; line-height: 28px; }
+  body.fixed #tab-frac .res { height: 46px; line-height: 46px; }
+  body.fixed .fMore { height: 62px; margin-bottom: 4px; }
+  body.fixed .fMore .cell { height: 22px; line-height: 22px; }
+  body.fixed .keys { gap: 6px; }
+  body.fixed main { padding-bottom: 4px; }
+}
+@media (max-height: 680px) {
+  body.fixed .tab { min-height: 40px; font-size: 15px; }
+  body.fixed #tab-frac .screen { height: 76px; }
+  body.fixed #tab-frac .res { height: 40px; line-height: 40px; }
+  body.fixed .fMore { height: 58px; }
+  body.fixed .fMore .cell { height: 20px; line-height: 20px; }
+  body.fixed .fMore .fNote { height: 16px; line-height: 16px; font-size: 12px; }
+}
+.fMore .fHint { height: 25px; line-height: 25px; font-size: 15px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-height: 760px) { body.fixed .fMore .fHint { height: 22px; line-height: 22px; font-size: 14px; } }

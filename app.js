@@ -89,24 +89,19 @@
     if (fixed) { window.scrollTo(0, 0); sizeKeys(); }
   }
   function sizeKeys() {
-    if (tool !== "frac") return;
-    var keys = $("fKeys"), panel = $("tab-frac");
-    var rows = 7 + ($("pad16").classList.contains("hidden") ? 0 : 2);
-    var gaps = (rows - 1) * 8;
-    var top = $("fScroll").getBoundingClientRect().top;
-    var bottomPad = 12 + 8 + 1 + (parseFloat(getComputedStyle(document.body).paddingBottom) || 0);
-    var minScroll = 30;
-    var avail = window.innerHeight - top - bottomPad - minScroll - gaps + 6 * (rows - 5);
-    var kh = Math.max(42, Math.min(68, Math.floor(avail / rows)));
-    document.documentElement.style.setProperty("--kh", kh + "px");
+    $("fKeys").classList.toggle("open16", !$("pad16").classList.contains("hidden"));
   }
-  var lastW = 0, lastH = 0;
-  window.addEventListener("resize", function () {
-    // only re-measure on real size changes (rotation), not on tiny toolbar changes
-    if (Math.abs(window.innerWidth - lastW) > 40 || Math.abs(window.innerHeight - lastH) > 120) {
-      lastW = window.innerWidth; lastH = window.innerHeight; sizeKeys();
-    }
-  });
+  // real visible height: CSS 100dvh where supported, else track the visual viewport
+  var hasDvh = window.CSS && CSS.supports && CSS.supports("height", "100dvh");
+  function setAppH() {
+    if (hasDvh) return;
+    var h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty("--appH", Math.round(h) + "px");
+  }
+  setAppH();
+  window.addEventListener("resize", setAppH);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", setAppH);
+  window.addEventListener("orientationchange", function () { setTimeout(setAppH, 300); });
   // fit long text inside the fixed display without growing it
   function fitText(node, max, min) {
     var size = max;
@@ -165,12 +160,16 @@
     var f = r !== null && r !== "div0" ? SC.fmtQ(r) : null;
     var exprLine = fresh ? lastExpr + " =" : SC.showExpr(toks);
     $("fExpr").textContent = exprLine || "Type a number, then tap a fraction";
-    $("fRes").textContent = r === "div0" ? "Can't divide by 0" : f ? (fresh ? "" : "= ") + f.text : "";
+    $("fRes").textContent = r === "div0" ? "Can't divide by 0" : f ? (fresh ? "" : f.isExact ? "= " : "\u2248 ") + f.text : "";
     fill($("fMore"), f ? [
       f.ftIn ? cell("Feet & inches", f.ftIn) : null,
       cell("Decimal · mm", f.dec + "  ·  " + f.mm, false,
-        f.isExact ? 'exact to 1/16"' : 'rounded to nearest 1/16" ' + SC.diffNote(f.diff))
-    ] : []);
+        f.isExact ? 'exact to 1/16"' : 'rounded to nearest 1/16" ' + SC.diffNote(f.diff)),
+      el("div", "fNote", f.isExact ? "Exact tape mark" : "Nearest 1/16\" " + SC.diffNote(f.diff))
+    ] : [
+      el("div", "fHint", "25 then ½ = 25 ½ · 3 ft ' 4 = 3' 4\""),
+      el("div", "fHint", "Decimals too: 12.83 → nearest 1/16\"")
+    ]);
     var ex = $("fExpr");
     fitText(ex, 22, 15);
     ex.scrollLeft = ex.scrollWidth; // keep the newest entry in view (scrolls inside the display only)
@@ -249,7 +248,7 @@
     }
     if (c.metOk) {
       fill($("cMetOut"), [
-        cell("Millimeters", c.outMm.toFixed(1) + " mm", true),
+        cell("Millimeters", SC.fmtMm(c.outMm) + " mm", true),
         cell("Centimeters", (c.outMm / 10).toFixed(2) + " cm"),
         cell("Meters", (c.outMm / 1000).toFixed(3) + " m")
       ]);
@@ -260,7 +259,7 @@
     var from = dir === "toImp"
       ? c.metric.trim() + " " + unit
       : [c.feet.trim() ? c.feet.trim() + "'" : "", c.inches.trim() ? c.inches.trim() + '"' : "", c.frac !== "0" ? "+" + SC.fracStr(Number(c.frac)) + '"' : ""].filter(Boolean).join(" ");
-    var to = dir === "toImp" ? (c.imp ? c.imp.ftIn + "  ·  " + c.imp.dec : "") : (c.metOk ? c.outMm.toFixed(1) + " mm" : "");
+    var to = dir === "toImp" ? (c.imp ? c.imp.ftIn + "  ·  " + c.imp.dec : "") : (c.metOk ? SC.fmtMm(c.outMm) + " mm" : "");
     if (convTimer) clearTimeout(convTimer);
     if (to) convTimer = setTimeout(function () { pushRecent("conv", from, to, true); }, 1500);
   }
@@ -363,7 +362,6 @@
   });
   renderPlate();
 
-  lastW = window.innerWidth; lastH = window.innerHeight;
   layoutMode();
   renderRecent();
   reserveOut();
@@ -398,9 +396,22 @@
   }
 
   // ---------- offline ----------
+  // When a new version takes over, reload once so the new files show right away.
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (!hadController || reloaded) return; // first install: nothing to refresh
+      var key = "shipyard-sw-reload", now = Date.now(), last = 0;
+      try { last = Number(sessionStorage.getItem(key) || 0); } catch (e) { /* ignore */ }
+      if (now - last < 10000) return; // guard against reload loops
+      try { sessionStorage.setItem(key, String(now)); } catch (e) { /* ignore */ }
+      reloaded = true;
+      location.reload();
+    });
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("./sw.js").catch(function () { /* offline cache unavailable */ });
+      navigator.serviceWorker.register("./sw.js").then(function (reg) {
+        if (reg && reg.update) reg.update().catch(function () { /* offline */ });
+      }).catch(function () { /* offline cache unavailable */ });
     });
   }
 })();

@@ -43,7 +43,7 @@
   function parseInches(s) {
     var t = String(s).trim().replace(/"/g, "");
     if (!t) return 0;
-    var m = t.match(/^(\d+(?:\.\d+)?)?(?:[\s-]+)?(?:(\d+)\/(\d+))?$/);
+    var m = t.match(/^(\d+(?:\.\d*)?|\.\d+)?(?:[\s-]+)?(?:(\d+)\/(\d+))?$/);
     if (!m || (!m[1] && !m[2])) return NaN;
     var v = m[1] ? parseFloat(m[1]) : 0;
     if (m[2]) {
@@ -100,10 +100,20 @@
     return out;
   }
 
+  // exact rational from a typed number like "12.83", ".5", "5." or ""
+  function decQ(str) {
+    str = String(str || "");
+    var i = str.indexOf(".");
+    if (i < 0) return q(Number(str || "0"), 1);
+    var whole = str.slice(0, i) || "0", dec = str.slice(i + 1);
+    return q(Number(whole + dec), Math.pow(10, dec.length));
+  }
+  var MAX_DEC = 4; // digits after the point
+
   function termQ(t) {
     if (t.val) return t.val;
-    var r = q(Number(t.inch || "0") * 16 + t.frac, 16);
-    if (t.hasFt) r = qAdd(r, q(Number(t.feet || "0") * 12));
+    var r = qAdd(decQ(t.inch), q(t.frac, 16));
+    if (t.hasFt) r = qAdd(r, qMul(decQ(t.feet), q(12)));
     return r;
   }
 
@@ -115,20 +125,28 @@
   function press(toks, key, fresh) {
     var last = toks[toks.length - 1];
     var t = lastTerm(toks);
+    if (key === ".") {
+      if (fresh) return [{ t: "dig", v: "." }];
+      if (t && (t.val || t.frac)) return toks;
+      if (t && t.inch.indexOf(".") >= 0) return toks; // only one point per number
+      return toks.concat({ t: "dig", v: "." });
+    }
     if (/^\d$/.test(key)) {
       if (fresh) return [{ t: "dig", v: key }];
       if (t && (t.val || t.frac)) return toks;
       if (t && key === "0" && t.inch === "0") return toks;
+      if (t && t.inch.indexOf(".") >= 0 && t.inch.length - t.inch.indexOf(".") > MAX_DEC) return toks;
       return toks.concat({ t: "dig", v: key });
     }
     if (key === "ft") {
-      if (fresh || !t || t.val || t.hasFt || t.frac || !t.inch) return toks;
+      if (fresh || !t || t.val || t.hasFt || t.frac || !t.inch || t.inch === ".") return toks;
       return toks.concat({ t: "ft" });
     }
     if (key.charAt(0) === "f") {
       var n16 = Number(key.slice(1));
       if (fresh) return [{ t: "frac", v: n16 }];
       if (t && t.val) return toks;
+      if (t && t.inch.indexOf(".") >= 0) return toks; // 12.5 then ½ makes no sense
       if (last && last.t === "frac") return toks.slice(0, -1).concat({ t: "frac", v: n16 });
       return toks.concat({ t: "frac", v: n16 });
     }
@@ -191,8 +209,9 @@
       var t = x.term;
       if (t.val) return fmtQ(t.val).text;
       var s = "";
-      if (t.hasFt) s += t.feet + "'";
-      if (t.inch) s += (s ? " " : "") + t.inch;
+      var lead = function (v) { return v.charAt(0) === "." ? "0" + v : v; };
+      if (t.hasFt) s += lead(t.feet) + "'";
+      if (t.inch) s += (s ? " " : "") + lead(t.inch);
       if (t.frac) s += (s ? " " : "") + fracLabel(t.frac);
       if (t.hasFt && (t.inch || t.frac)) s += '"';
       return s;
@@ -252,7 +271,15 @@
   }
   function fmtWt(v) { return fmtNum(v, v < 1000 ? 1 : 0); }
 
+  // mm to 3 places, trailing zeros trimmed (keeps one): 304.8, 325.882, 1.588
+  function fmtMm(v) {
+    var t = (v + (v >= 0 ? 1e-9 : -1e-9)).toFixed(3).replace(/0+$/, ""); // 1.5875 -> 1.588
+    if (t.charAt(t.length - 1) === ".") t += "0";
+    return t;
+  }
+
   var api = {
+    decQ: decQ, fmtMm: fmtMm,
     gcd: gcd, fracStr: fracStr, mmToImp: mmToImp, parseNum: parseNum, parseInches: parseInches,
     diffNote: diffNote, fracLabel: fracLabel, press: press, evaluate: evaluate, fmtQ: fmtQ,
     showExpr: showExpr, MATS: MATS, lenToFt: lenToFt, thkToFt: thkToFt, plate: plate,

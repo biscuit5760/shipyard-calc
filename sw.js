@@ -1,5 +1,5 @@
 /* Shipyard Calc - offline cache. Bump VERSION when any file changes. */
-var VERSION = "shipyard-calc-v2";
+var VERSION = "shipyard-calc-v3";
 var FILES = [
   "./",
   "./index.html",
@@ -15,7 +15,9 @@ var FILES = [
 ];
 
 self.addEventListener("install", function (e) {
-  e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(caches.open(VERSION).then(function (c) {
+    return c.addAll(FILES.map(function (f) { return new Request(f, { cache: "reload" }); }));
+  }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener("activate", function (e) {
@@ -24,19 +26,45 @@ self.addEventListener("activate", function (e) {
   }).then(function () { return self.clients.claim(); }));
 });
 
+// Page, code and styles: try the network first (so online phones always get the newest version),
+// fall back to the saved copy after 4 s or when offline. Images: saved copy first.
+function isCode(req, url) {
+  return req.mode === "navigate" || /\.(html|js|css|webmanifest)$/.test(url.pathname) || /\/$/.test(url.pathname);
+}
+function networkFirst(req) {
+  return new Promise(function (resolve) {
+    var done = false;
+    function fromCache() {
+      return caches.match(req, { ignoreSearch: true }).then(function (hit) {
+        return hit || (req.mode === "navigate" ? caches.match("./index.html") : undefined);
+      });
+    }
+    var timer = setTimeout(function () {
+      fromCache().then(function (hit) { if (hit && !done) { done = true; resolve(hit); } });
+    }, 4000);
+    fetch(req, { cache: "no-cache" }).then(function (res) {
+      if (res && res.ok) {
+        var copy = res.clone();
+        caches.open(VERSION).then(function (c) { c.put(req, copy); });
+      }
+      if (!done) { done = true; clearTimeout(timer); resolve(res); }
+    }).catch(function () {
+      clearTimeout(timer);
+      fromCache().then(function (hit) { if (!done) { done = true; resolve(hit || Response.error()); } });
+    });
+  });
+}
+
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
+  var url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
+  if (isCode(e.request, url)) { e.respondWith(networkFirst(e.request)); return; }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(function (hit) {
-      if (hit) return hit;
-      return fetch(e.request).then(function (res) {
-        if (res && res.ok && new URL(e.request.url).origin === self.location.origin) {
-          var copy = res.clone();
-          caches.open(VERSION).then(function (c) { c.put(e.request, copy); });
-        }
+      return hit || fetch(e.request).then(function (res) {
+        if (res && res.ok) { var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put(e.request, copy); }); }
         return res;
-      }).catch(function () {
-        if (e.request.mode === "navigate") return caches.match("./index.html");
       });
     })
   );
