@@ -1,4 +1,6 @@
 /* Shipyard Calc - UI */
+// Anonymous open counter (GoatCounter). Change this one line if the site code changes; "" turns counting off.
+var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
 (function () {
   "use strict";
   var SC = window.SC;
@@ -396,6 +398,42 @@
   }
 
   // ---------- offline ----------
+  // ---------- anonymous open counter ----------
+  // Sends only a path, title, and "installed"/"browser". No cookies, no IDs, no referrer.
+  // /first-open: once ever per device. /app: at most once per day per device.
+  (function () {
+    if (!COUNTER_URL || location.protocol === "file:") return;
+    function get(k) { try { return localStorage.getItem(k); } catch (e) { return "x"; } } // storage blocked: don't count
+    function set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
+    function today() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+    function mode() {
+      var sa = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+      return sa ? "installed" : "browser";
+    }
+    function ping(path) {
+      var url = COUNTER_URL + "?p=" + path + "&t=Shipyard%20Calc&r=" + mode() + "&rnd=" + Math.random().toString(36).slice(2, 10);
+      try {
+        if (window.fetch) {
+          fetch(url, { mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store", keepalive: true }).catch(function () { /* silent */ });
+        } else {
+          var img = new Image(); img.referrerPolicy = "no-referrer"; img.src = url;
+        }
+      } catch (e) { /* silent */ }
+    }
+    var sent = false;
+    function run() {
+      if (sent || !navigator.onLine) return;
+      sent = true;
+      if (!get("shipyard-count-first")) { set("shipyard-count-first", "1"); ping("/first-open"); }
+      var d = today();
+      if (get("shipyard-count-day") !== d) { set("shipyard-count-day", d); ping("/app"); }
+    }
+    function start() { if (navigator.onLine) run(); else window.addEventListener("online", run); }
+    // after the page is up, so it never slows the app
+    if (document.readyState === "complete") setTimeout(start, 0);
+    else window.addEventListener("load", function () { setTimeout(start, 0); });
+  })();
+
   // When a new version takes over, reload once so the new files show right away.
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     var hadController = !!navigator.serviceWorker.controller, reloaded = false;

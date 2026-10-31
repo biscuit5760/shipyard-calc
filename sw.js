@@ -1,5 +1,5 @@
 /* Shipyard Calc - offline cache. Bump VERSION when any file changes. */
-var VERSION = "shipyard-calc-v3";
+var VERSION = "shipyard-calc-v4";
 var FILES = [
   "./",
   "./index.html",
@@ -58,7 +58,7 @@ function networkFirst(req) {
 self.addEventListener("fetch", function (e) {
   if (e.request.method !== "GET") return;
   var url = new URL(e.request.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin) return; // other sites (e.g. the open counter) pass straight through, never cached
   if (isCode(e.request, url)) { e.respondWith(networkFirst(e.request)); return; }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(function (hit) {

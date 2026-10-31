@@ -11,3 +11,5 @@ Plain static files, no build step, no outside network calls. Open `index.html` f
 
 ## Updating later
 Change the files, then bump `VERSION` at the top of `sw.js` (e.g. `shipyard-calc-v2`) so phones pick up the new version.
+
+Privacy: the app sends one anonymous "opened" count to GoatCounter (once per day per device, plus once on a device's first open). No cookies, IDs, or personal info. Change or blank `COUNTER_URL` at the top of `app.js` to change or turn it off.
