@@ -164,3 +164,40 @@ body.fixed .fScroll { flex: 0.0001 1 0; }
 .fMore .fHint { height: 25px; line-height: 25px; font-size: 15px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-height: 760px) { body.fixed .fMore .fHint { height: 22px; line-height: 22px; font-size: 14px; } }
 .ovPriv { font-size: 12px; color: #8b96a1; margin: 6px 0 0; }
+
+/* ---------- v7: install banner (one short strip under the title; keypad shrinks to fit) ---------- */
+.instBar { display: flex; align-items: center; gap: 8px; max-width: 720px; margin: 0 auto; padding: 4px 12px 2px; width: 100%; }
+body.fixed .instBar { flex: none; }
+.instBtn { flex: 1 1 auto; min-height: 44px; font-size: 18px; font-weight: 800; border-radius: 12px; border: 2px solid var(--accent); background: var(--accent); color: var(--accentText); cursor: pointer; font-family: inherit; padding: 4px 12px; }
+.instIco { font-size: 20px; }
+.instMsg { flex: 1 1 auto; margin: 0; min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 0 4px; font-size: 15px; line-height: 1.25; font-weight: 600; color: var(--text); background: var(--panel); border: 2px solid var(--accent); border-radius: 12px; padding: 3px 10px; }
+.instMsg svg { width: 18px; height: 18px; vertical-align: -3px; flex: none; }
+.instX { flex: none; width: 44px; height: 44px; border-radius: 999px; border: 2px solid var(--strong); background: var(--panel); color: var(--text); font-size: 18px; font-weight: 800; cursor: pointer; font-family: inherit; padding: 0; }
+@media (max-height: 760px) {
+  body.fixed .instBar { padding: 2px 10px 0; }
+  body.fixed .instBtn, body.fixed .instMsg { min-height: 40px; }
+  body.fixed .instBtn { font-size: 17px; }
+  body.fixed .instMsg { font-size: 14px; line-height: 1.2; padding: 2px 8px; }
+  body.fixed .instX { width: 40px; height: 40px; }
+}
+/* banner showing on a short screen: tighten the rows above the keys so the keypad keeps its size */
+@media (max-height: 760px) {
+  body.fixed.instOn .top { padding: 4px 12px 0; }
+  body.fixed.instOn .top h1 { font-size: 20px; }
+  body.fixed.instOn .pill { min-height: 38px; }
+  body.fixed.instOn .instBar { padding: 3px 10px 0; }
+  body.fixed.instOn .instBtn, body.fixed.instOn .instMsg { min-height: 38px; }
+  body.fixed.instOn .instX { width: 38px; height: 38px; }
+  body.fixed.instOn .tabs { padding: 4px 10px 4px; }
+  body.fixed.instOn .tab { min-height: 38px; }
+  body.fixed.instOn #tab-frac { padding: 6px 10px 8px; }
+  body.fixed.instOn #tab-frac .screen { height: 72px; margin-bottom: 4px; }
+  body.fixed.instOn #tab-frac .expr { height: 26px; line-height: 26px; }
+  body.fixed.instOn #tab-frac .res { height: 40px; line-height: 40px; }
+  body.fixed.instOn .fMore { height: 56px; margin-bottom: 2px; }
+  body.fixed.instOn .fMore .cell { height: 20px; line-height: 20px; }
+  body.fixed.instOn .fMore .fNote { height: 16px; line-height: 16px; font-size: 12px; }
+  body.fixed.instOn .fMore .fHint { height: 20px; line-height: 20px; font-size: 13px; }
+  body.fixed.instOn .keys { gap: 5px; }
+  body.fixed.instOn main { padding-bottom: 2px; }
+}

@@ -36,7 +36,12 @@
     homeAnd: "<b>Android (Chrome):</b> tap the <b>⋮</b> menu, then <b>Install app</b> or <b>Add to Home screen</b>.",
     homeOff: "Works offline once it's opened. Your math and history stay on this phone.",
     fromExact: "from exact", exact: "exact",
-    desc: "Tape-measure fractions, metric to imperial, and steel plate weight for the shipyard."
+    desc: "Tape-measure fractions, metric to imperial, and steel plate weight for the shipyard.",
+    instRegion: "Install", instBtn: "Install app", instHide: "Hide install tip",
+    instIos: "Install: tap Share {icon} then Add to Home Screen",
+    instIosOther: "To install, open this page in Safari",
+    instAnd: "Install: tap the ⋮ menu, then Install app or Add to Home screen",
+    instInApp: "To install, open in Chrome: tap ⋮ then Open in Chrome or Open in browser"
   };
   var ES = {
     share: "Compartir", toLight: "Cambiar a claro", toDark: "Cambiar a oscuro", close: "Cerrar",
@@ -73,7 +78,12 @@
     homeAnd: "<b>Android (Chrome):</b> toca el menú <b>⋮</b> y luego <b>Instalar aplicación</b> o <b>Agregar a la pantalla principal</b>.",
     homeOff: "Funciona sin internet una vez abierta. Tus cálculos e historial se quedan en este teléfono.",
     fromExact: "del exacto", exact: "exacto",
-    desc: "Fracciones de cinta, métrico a pulgadas y peso de placa de acero para el astillero."
+    desc: "Fracciones de cinta, métrico a pulgadas y peso de placa de acero para el astillero.",
+    instRegion: "Instalar", instBtn: "Instalar app", instHide: "Ocultar aviso de instalación",
+    instIos: "Instalar: toca Compartir {icon} y luego Agregar a inicio",
+    instIosOther: "Para instalar, abre esta página en Safari",
+    instAnd: "Instalar: toca el menú ⋮ y luego Instalar aplicación o Agregar a la pantalla principal",
+    instInApp: "Para instalar, ábrela en Chrome: toca ⋮ y luego Abrir en Chrome o Abrir en el navegador"
   };
   function pick() {
     var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || "en"];

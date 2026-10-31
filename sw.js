@@ -1,5 +1,5 @@
 /* Shipyard Calc - offline cache. Bump VERSION when any file changes. */
-var VERSION = "shipyard-calc-v6";
+var VERSION = "shipyard-calc-v7";
 var FILES = [
   "./",
   "./index.html",

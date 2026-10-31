@@ -404,6 +404,85 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
   }
 
   // ---------- offline ----------
+  // ---------- install banner ----------
+  // Phones never let a web page install itself, so this just makes the phone's own install step easy to find.
+  // Android/Chrome/Edge/Samsung: one tap opens the phone's real Install box. iPhone: short Share -> Add to Home Screen tip.
+  (function () {
+    var bar = $("instBar"), btn = $("instBtn"), msg = $("instMsg");
+    var DKEY = "shipyard-install-hidden", IKEY = "shipyard-installed", WEEK = 7 * 24 * 3600 * 1000;
+    var ua = navigator.userAgent || "", deferred = null, mode = "", lastTap = 0, pending = null;
+    function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* ignore */ } }
+    function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function standalone() {
+      var mm = function (q) { return window.matchMedia && window.matchMedia(q).matches; };
+      return mm("(display-mode: standalone)") || mm("(display-mode: fullscreen)") || mm("(display-mode: minimal-ui)") ||
+        navigator.standalone === true || document.referrer.indexOf("android-app://") === 0;
+    }
+    function hiddenByUser() { var t = Number(read(DKEY) || 0); return t > 0 && Date.now() - t < WEEK; }
+    var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var isAndroid = /Android/i.test(ua);
+    var inApp = /FBAN|FBAV|FB_IAB|Messenger|Instagram|Line\/|GSA\/|Snapchat|Twitter|MicroMessenger|GmailApp|; wv\)/i.test(ua);
+    var iosOtherBrowser = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua); // these have Share > Add to Home Screen too (iOS 16.4+)
+    var iosSafari = isIOS && !inApp && (iosOtherBrowser || /Safari\//.test(ua));
+
+    var SHARE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Share"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+    function setMsg(key) {
+      msg.textContent = "";
+      T(key).split("{icon}").forEach(function (part, i) {
+        if (i > 0) { var s = document.createElement("span"); s.className = "instSvg"; s.innerHTML = SHARE_SVG; s.firstChild.setAttribute("aria-label", T("share")); msg.appendChild(s); }
+        if (part) msg.appendChild(document.createTextNode(part));
+      });
+    }
+    function hide() { mode = ""; bar.classList.add("hidden"); document.body.classList.remove("instOn"); if (pending) { clearTimeout(pending); pending = null; } }
+    function show(m) {
+      if (standalone() || hiddenByUser()) return hide();
+      if (m !== "prompt" && read(IKEY)) return; // already installed from this browser: no tip
+      // never shift the keypad in the middle of typing: wait for a short pause
+      var wait = 1500 - (Date.now() - lastTap);
+      if (wait > 0) { if (pending) clearTimeout(pending); pending = setTimeout(function () { pending = null; show(m); }, wait); return; }
+      mode = m;
+      btn.classList.toggle("hidden", m !== "prompt");
+      msg.classList.toggle("hidden", m === "prompt");
+      if (m === "ios") setMsg("instIos");
+      else if (m === "iosOther") setMsg("instIosOther");
+      else if (m === "android") setMsg("instAnd");
+      else if (m === "inApp") setMsg("instInApp");
+      bar.classList.remove("hidden");
+      document.body.classList.add("instOn");
+    }
+    document.addEventListener("pointerdown", function (e) { if (!bar.contains(e.target)) lastTap = Date.now(); }, true);
+
+    if (standalone()) { store(IKEY, "1"); return; } // opened from the home screen: nothing to show
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      deferred = e;
+      store(IKEY, null); // Chrome only offers this when the app is NOT installed
+      show("prompt");
+    });
+    window.addEventListener("appinstalled", function () { store(IKEY, "1"); deferred = null; hide(); });
+    btn.addEventListener("click", function () {
+      if (!deferred) return hide();
+      var ev = deferred; deferred = null;
+      try {
+        ev.prompt();
+        if (ev.userChoice) ev.userChoice.then(function (c) { if (c && c.outcome === "accepted") store(IKEY, "1"); hide(); }, hide);
+        else hide();
+      } catch (err) { hide(); }
+    });
+    $("instX").addEventListener("click", function () { store(DKEY, String(Date.now())); hide(); });
+    if (window.matchMedia) {
+      var mq = window.matchMedia("(display-mode: standalone)");
+      var onMode = function () { if (standalone()) hide(); };
+      if (mq.addEventListener) mq.addEventListener("change", onMode); else if (mq.addListener) mq.addListener(onMode);
+    }
+
+    if (isIOS) { show(iosSafari ? "ios" : "iosOther"); return; }
+    if (isAndroid) {
+      // Chrome, Edge and Samsung fire beforeinstallprompt within a few seconds; QR-scanner and chat-app browsers usually don't.
+      setTimeout(function () { if (!deferred && !mode) show(inApp ? "inApp" : "android"); }, 3000);
+    }
+  })();
+
   // ---------- anonymous open counter ----------
   // Sends only a path, title, and "installed"/"browser". No cookies, no IDs, no referrer.
   // /first-open: once ever per device. /app: at most once per day per device.
