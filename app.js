@@ -191,12 +191,17 @@ var COUNTER_URL = "https://shipyardcalc.goatcounter.com/count";
     var b = e.target.closest("button[data-k]");
     if (b) tap(b.getAttribute("data-k"));
   }
+  // screen-reader names come from each key's own value, e.g. f6 -> "3/8 inch" / "3/8 de pulgada"
+  Array.prototype.forEach.call(document.querySelectorAll('#fKeys button[data-k^="f"]'), function (b) {
+    b.setAttribute("aria-label", T("fracAria", { f: SC.fracStr(Number(b.getAttribute("data-k").slice(1))) }));
+  });
   $("fracPad").addEventListener("click", onKeyClick);
   $("pad16").addEventListener("click", onKeyClick);
   $("numPad").addEventListener("click", onKeyClick);
   $("t16").addEventListener("click", function () {
     var open = $("pad16").classList.toggle("hidden") === false;
     $("t16").classList.toggle("on", open);
+    $("t16").setAttribute("aria-expanded", open ? "true" : "false");
     sizeKeys();
   });
   $("fBack").addEventListener("click", function () { toks = toks.slice(0, -1); fresh = false; lastExpr = ""; renderFrac(); });
